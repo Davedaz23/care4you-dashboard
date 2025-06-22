@@ -12,7 +12,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 
 
@@ -53,12 +54,20 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     </div>
     <h2 className="hidden md:block text-2xl font-bold text-white mb-10"> <img src="/watermarkimage.png" width={50} height={50} alt="" />Care4You</h2>
     <nav className="space-y-2">
-      <SidebarLink href="/auth/dashboard" icon={<Home size={20} />} label="Dashboard" white />
+      <SidebarLink href="/auth/dashboard/appointments" icon={<Home size={20} />} label="Appointments" white />
       <SidebarLink href="/auth/dashboard/Users" icon={<Users size={20} />} label="User List" white />
-      <SidebarLink href="/auth/dashboard/appointments" icon={<Calendar size={20} />} label="Appointments" white />
+      {/* <SidebarLink href="/auth/dashboard/appointments" icon={<Calendar size={20} />} label="Appointments" white /> */}
       {/* <SidebarLink href="/auth/dashboard/patients" icon={<Users size={20} />} label="Patients" white /> */}
       <SidebarLink href="/auth/dashboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
-      <SidebarLink href="/auth/signupHospital" icon={<FileText size={20} />} label="Register Hospital" white />
+      {user?.role === 'superadmin' && (
+    <SidebarLink 
+      href="/auth/signup" 
+      icon={<UserPlus size={20} />} 
+      label="Register Admin" 
+      white 
+    />
+  )}
+      <SidebarLink href="/auth/dashboard/signupHospital" icon={<FileText size={20} />} label="Register Hospital Admin" white />
       <SidebarLink href="/auth/dashboard/settings" icon={<Settings size={20} />} label="Settings" white />
       <div>
     <button
@@ -81,25 +90,28 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
             {/* Top Navbar */}
-            <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm flex items-center justify-between md:px-6">
-              <div className="flex items-center gap-4">
-                {/* Hamburger for mobile */}
-                <button
-                  className="md:hidden text-sky-600"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                  <Menu size={24} />
-                </button>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                  Welcome, {user?.role?.toUpperCase()}
-                </h1>
-              </div>
-              <span className="text-sm text-gray-500">{user?.phone}</span>
-            </header>
+    <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm flex items-center justify-between md:px-6">
+  <div className="flex items-center gap-4">
+    <button
+      className="md:hidden text-sky-600"
+      onClick={() => setSidebarOpen(!sidebarOpen)}
+    >
+      <Menu size={24} />
+    </button>
+    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+      Welcome, {user?.name || 'Admin'}
+    </h1>
+  </div>
+  {user?.phone && (
+    <span className="text-sm text-gray-500">
+      {user.phone} {/* This will now show the exact login phone number */}
+    </span>
+  )}
+</header>
 
             {/* Page Content */}
             <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-
+            
             {/* Footer */}
             <footer className="bg-white border-t border-gray-200 p-4 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
               <span>© 2025 Hospital Management System</span>

@@ -6,11 +6,46 @@ import {
   collection, 
   doc, 
   setDoc,
-  addDoc 
+  addDoc,
+  onSnapshot
 } from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import db from "./firestoreConfig";
 import { v4 as uuid } from "uuid";
+
+// Add this function to your exports
+export const subscribeToAuthChanges = (callback: (user: any | null) => void) => {
+  // Get the user ID from localStorage (where you presumably store it after login)
+  const storedUser = localStorage.getItem('adminUser');
+  let userId: string | null = null;
+  
+  try {
+    userId = storedUser ? JSON.parse(storedUser).uid : null;
+  } catch (e) {
+    console.error("Error parsing stored user", e);
+  }
+
+  if (!userId) {
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
+
+  // Subscribe to the user document in Firestore
+  const userDocRef = doc(db, "adminuser", userId);
+  const unsubscribe = onSnapshot(userDocRef, (doc) => {
+    if (doc.exists()) {
+      const userData = doc.data();
+      callback({
+        uid: doc.id,
+        ...userData
+      });
+    } else {
+      callback(null);
+    }
+  });
+
+  return unsubscribe;
+};
 
 // Enhanced login with phone number that handles hospital role specifically
 export const loginWithPhone = async (phone: string, password: string, requiredRole?: string) => {
@@ -31,31 +66,19 @@ export const loginWithPhone = async (phone: string, password: string, requiredRo
     throw new Error("Invalid password");
   }
 
-  // Check role if required
-  if (requiredRole && userData.role !== requiredRole) {
-    throw new Error(`Access restricted to ${requiredRole} users only`);
+  // Check required fields exist
+  if (!userData.phone || !userData.role) {
+    throw new Error("Invalid user data");
   }
 
-  // For hospital admins, verify hospital exists
-  let hospitalDetails = null;
-  if (userData.role === "hospital") {
-    try {
-      hospitalDetails = await getHospitalByAdminId(userDoc.id);
-      if (!hospitalDetails) {
-        throw new Error("Associated hospital not found");
-      }
-    } catch (error) {
-      console.error("Error fetching hospital details:", error);
-    }
-  }
-
+  // Return complete user data
   return {
     uid: userDoc.id,
-    phone: userData.phone,
+    phone: userData.phone, // This ensures the same phone number is returned
     role: userData.role,
-    hospitalId: userData.hospitalId || hospitalDetails?.id || null,
-    hospitalName: userData.hospitalName || hospitalDetails?.name || null,
-    hospitalData: userData.role === "hospital" ? hospitalDetails : null
+    name: userData.name,
+    hospitalId: userData.hospitalId,
+    hospitalName: userData.hospitalName
   };
 };
 
@@ -79,7 +102,6 @@ export const createAdminUser = async (
   // If phone number doesn't exist, proceed with user creation
   const hashedPassword = await bcrypt.hash(password, 10);
   const uid = uuid();
-  
   const userData: any = {
     phone,
     password: hashedPassword,

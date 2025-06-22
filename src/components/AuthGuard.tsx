@@ -15,16 +15,28 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       if (!user) {
+        // Clear any existing user data
+        localStorage.removeItem('adminUser');
         router.push('/auth/login');
       } else {
+        // Store the user data in localStorage
+        localStorage.setItem('adminUser', JSON.stringify(user));
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [router]);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="text-sky-600 font-semibold">Loading...</span>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 };

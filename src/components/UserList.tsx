@@ -4,11 +4,45 @@
 import { useEffect, useState } from "react";
 import { getDocs, collection, deleteDoc, doc } from "firebase/firestore";
 import db from "../config/firestoreConfig"; // Adjust this import if necessary
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons from react-icons
+
+type User = {
+  id: string;
+  phone: string;
+  role: string;
+  password: string;
+  [key: string]: any; // Allow extra fields from Firestore if needed
+};
 
 export default function UsersList() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+
+  // Predefined admin credentials
+  const predefinedUsers = [
+    {
+      id: "admin-account",
+      phone: "Admin Account",
+      role: "admin",
+      password: "admin123" // This is just for display, not stored in Firebase
+    },
+    {
+      id: "hospital-admin-account",
+      phone: "Hospital Admin Account",
+      role: "hospitalAdmin",
+      password: "hospital123" // This is just for display, not stored in Firebase
+    }
+  ];
+
+  // Toggle password visibility
+  const togglePasswordVisibility = (userId: string) => {
+    setVisiblePasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
 
   useEffect(() => {
     async function fetchUsers() {
@@ -17,12 +51,26 @@ export default function UsersList() {
         const querySnapshot = await getDocs(userRef);
 
         // Map through the documents and get the user data
-        const usersData = querySnapshot.docs.map(doc => ({
-          id: doc.id, // Firebase document ID
-          ...doc.data(), // All fields from the Firestore document
-        }));
+        const usersData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id, // Firebase document ID
+            phone: data.phone || "Unknown", // Ensure phone exists
+            role: data.role || "user",      // Ensure role exists
+            password: data.password ? "********" : "Not set",
+            ...data // Include any other fields
+          };
+        });
 
-        setUsers(usersData);
+        // Initialize visibility state for all users
+        const initialVisibility: Record<string, boolean> = {};
+        [...predefinedUsers, ...usersData].forEach(user => {
+          initialVisibility[user.id] = false;
+        });
+        setVisiblePasswords(initialVisibility);
+
+        // Combine predefined users with fetched users
+        setUsers([...predefinedUsers, ...usersData]);
       } catch (err: any) {
         setError(err.message || "Failed to fetch users");
       } finally {
@@ -34,6 +82,12 @@ export default function UsersList() {
   }, []);
 
   const handleDelete = async (userId: string) => {
+    // Prevent deletion of predefined accounts
+    if (userId === "admin-account" || userId === "hospital-admin-account") {
+      alert("Cannot delete predefined admin accounts.");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         setLoading(true); // Show loading during delete
@@ -60,6 +114,7 @@ export default function UsersList() {
           <tr>
             <th className="border-b px-4 py-2">Phone Number</th>
             <th className="border-b px-4 py-2">Role</th>
+            <th className="border-b px-4 py-2">Password</th>
             <th className="border-b px-4 py-2">Actions</th>
           </tr>
         </thead>
@@ -68,13 +123,25 @@ export default function UsersList() {
             <tr key={user.id}>
               <td className="border-b px-4 py-2">{user.phone}</td>
               <td className="border-b px-4 py-2">{user.role}</td>
-              <td className="border-b px-4 py-2">
-                <button
-                  onClick={() => handleDelete(user.id)} // Call delete function when clicked
-                  className="ml-4 text-red-500 hover:underline"
+              <td className="border-b px-4 py-2 flex items-center">
+                {visiblePasswords[user.id] ? user.password : "********"}
+                <button 
+                  onClick={() => togglePasswordVisibility(user.id)}
+                  className="ml-2 text-gray-600 hover:text-gray-800"
+                  aria-label={visiblePasswords[user.id] ? "Hide password" : "Show password"}
                 >
-                  Delete
+                  {visiblePasswords[user.id] ? <FaEyeSlash /> : <FaEye />}
                 </button>
+              </td>
+              <td className="border-b px-4 py-2">
+                {!user.id.includes("-account") && ( // Only show delete for non-predefined accounts
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    className="ml-4 text-red-500 hover:underline"
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}

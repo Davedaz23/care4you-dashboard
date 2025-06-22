@@ -1,36 +1,55 @@
-'use client'; // Add this directive at the top
+'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-// Define the AdminUser type with required properties
 type AdminUser = {
   uid: string;
   phone: string;
   role: string;
+  name?: string;
+  hospitalId?: string;
+  hospitalName?: string;
 };
 
-// Create the context with initial values
-const AdminAuthContext = createContext<{
+type AuthContextType = {
   user: AdminUser | null;
   loading: boolean;
   logout: () => void;
-}>({
+  setUser: (user: AdminUser | null) => void; // Add setUser to the context
+};
+
+const AdminAuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   logout: () => {},
+  setUser: () => {},
 });
 
-// AdminAuthProvider component to wrap around your application and provide context
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('adminUser');
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      const storedUser = localStorage.getItem('adminUser');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.uid && parsedUser.phone && parsedUser.role) {
+            setUser(parsedUser);
+          } else {
+            console.error('Invalid user data in storage');
+            localStorage.removeItem('adminUser');
+          }
+        } catch (error) {
+          console.error('Error parsing user data', error);
+          localStorage.removeItem('adminUser');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const logout = () => {
@@ -39,11 +58,10 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AdminAuthContext.Provider value={{ user, loading, logout }}>
+    <AdminAuthContext.Provider value={{ user, loading, logout, setUser }}>
       {children}
     </AdminAuthContext.Provider>
   );
 };
 
-// Custom hook to access the context values
 export const useAdminAuth = () => useContext(AdminAuthContext);

@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { createAdminUser } from "../../../config/auth";
+// Update the path below if your PasswordInput is located elsewhere
+import { PasswordInput } from '../../../components/PasswordInput';
 
 export default function SignUpPage() {
+  
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("hospital");
+  const [role, setRole] = useState("admin");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -27,9 +30,11 @@ export default function SignUpPage() {
       const userId = await createAdminUser(phone, password, role);
       localStorage.setItem("adminUser", JSON.stringify({ phone, role, userId }));
       router.push("/auth/login");
-    } catch (err: any) {
+    }
+     catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
-    } finally {
+    }
+     finally {
       setLoading(false);
     }
   };
@@ -55,16 +60,14 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Password</label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
-            />
-          </div>
+        <label className="block text-sm font-medium text-gray-600">Password</label>
+      <PasswordInput
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Enter password"
+        required
+        />
+        </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-600">Select Role</label>

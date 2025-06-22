@@ -157,7 +157,7 @@ export default function AppointmentManager() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <Input
                     placeholder="Patient's email"
@@ -166,7 +166,7 @@ export default function AppointmentManager() {
                     required
                     type="email"
                   />
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
                   <Input
@@ -215,14 +215,14 @@ export default function AppointmentManager() {
                 </div>
               </div>
               
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                 <Input
                   placeholder="Patient's address"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
-              </div>
+              </div> */}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
