@@ -2,16 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/config/firebaseConfig";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+interface Hospital {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface Appointment {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  hospitalName: string;
+  hospitalID: string;
+  app_date: string;
+  app_time: string;
+  address: string;
+  description: string;
+  formattedDate: string;
+}
+
 export default function AppointmentManager() {
-  const [appointments, setAppointments] = useState<{ id: string; formattedDate: string; [key: string]: any }[]>([]);
-  const [hospitals, setHospitals] = useState<{ id: string; name: string; address: string }[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -23,18 +43,29 @@ export default function AppointmentManager() {
     address: "",
     description: "",
   });
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchAppointments = async () => {
     setLoading(true);
     try {
       const snapshot = await getDocs(collection(db, "appointments"));
-      const data = snapshot.docs.map((doc) => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        formattedDate: doc.data().app_date ? format(new Date(doc.data().app_date), "PPP") : "No date"
-      }));
+      const data = snapshot.docs.map((doc) => {
+        const docData = doc.data();
+        return {
+          id: doc.id,
+          fullName: docData.fullName || "",
+          email: docData.email || "",
+          phoneNumber: docData.phoneNumber || "",
+          hospitalName: docData.hospitalName || "",
+          hospitalID: docData.hospitalID || "",
+          app_date: docData.app_date || "",
+          app_time: docData.app_time || "",
+          address: docData.address || "",
+          description: docData.description || "",
+          formattedDate: docData.app_date ? format(new Date(docData.app_date), "PPP") : "No date"
+        };
+      });
       setAppointments(data);
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -46,10 +77,10 @@ export default function AppointmentManager() {
   const fetchHospitals = async () => {
     try {
       const snapshot = await getDocs(collection(db, "hospitals"));
-      const data = snapshot.docs.map((doc) => ({ 
-        id: doc.id, 
-        name: doc.data().name,
-        address: doc.data().address
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "",
+        address: doc.data().address || ""
       }));
       setHospitals(data);
     } catch (error) {
@@ -58,11 +89,23 @@ export default function AppointmentManager() {
   };
 
   const handleSubmit = async () => {
+    if (!form.fullName || !form.phoneNumber || !form.hospitalID) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
-        ...form,
-        app_date: form.app_date // Already in correct format
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        hospitalName: form.hospitalName,
+        hospitalID: form.hospitalID,
+        app_date: form.app_date,
+        app_time: form.app_time,
+        address: form.address,
+        description: form.description,
       };
 
       if (editId) {
@@ -91,7 +134,7 @@ export default function AppointmentManager() {
     }
   };
 
-  const handleEdit = (appointment: { [x: string]: any; id: any; formattedDate?: string; fullName?: any; email?: any; phoneNumber?: any; hospitalName?: any; hospitalID?: any; app_date?: any; app_time?: any; address?: any; description?: any; }) => {
+  const handleEdit = (appointment: Appointment) => {
     setForm({
       fullName: appointment.fullName,
       email: appointment.email,
@@ -157,16 +200,6 @@ export default function AppointmentManager() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <Input
-                    placeholder="Patient's email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    required
-                    type="email"
-                  />
-                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
                   <Input
@@ -214,15 +247,6 @@ export default function AppointmentManager() {
                   />
                 </div>
               </div>
-              
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <Input
-                  placeholder="Patient's address"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                />
-              </div> */}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -288,19 +312,15 @@ export default function AppointmentManager() {
                       <div>
                         <h3 className="text-lg font-bold text-gray-800">{appointment.fullName}</h3>
                         <p className="text-sm text-gray-600 mt-1 bg-gray-100 p-2 rounded">
-                          <span className="font-medium">Hospital:</span>
-                          {appointment.hospitalName}
+                          <span className="font-medium">Hospital:</span> {appointment.hospitalName}
                         </p>
                       </div>
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                        {appointment.app_time || "No time"}
+                        {appointment.app_time}
                       </span>
                     </div>
                     
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <p className="text-sm">
-                        <span className="font-medium">Email:</span> {appointment.email}
-                      </p>
                       <p className="text-sm">
                         <span className="font-medium">Phone:</span> {appointment.phoneNumber}
                       </p>
@@ -311,12 +331,6 @@ export default function AppointmentManager() {
                         {appointment.formattedDate}
                       </p>
                     </div>
-                    
-                    {appointment.address && (
-                      <p className="text-sm mt-2">
-                        <span className="font-medium">Address:</span> {appointment.address}
-                      </p>
-                    )}
                     
                     {appointment.description && (
                       <div className="mt-3 pt-3 border-t border-gray-200">

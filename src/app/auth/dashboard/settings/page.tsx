@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import  React, { useState, useEffect } from 'react';
 import { Settings, User, Lock, Bell, Shield, Mail } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

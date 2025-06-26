@@ -1,13 +1,14 @@
-import type { NextConfig } from "next";
-
-module.exports = {
+// next.config.js
+const nextConfig = {
+  output: 'export',
+   distDir: 'out', // Explicitly set output directory
   images: {
-    domains: ['thumbs.dreamstime.com'], // Add this line
+    domains: ['thumbs.dreamstime.com'],
+    unoptimized: true,
   },
+  // Add these to fix dynamic routes
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
+  skipTrailingSlashRedirect: true
 };
-const nextConfig: NextConfig = {
-  /* config options here */
-  
-};
-
-export default nextConfig;

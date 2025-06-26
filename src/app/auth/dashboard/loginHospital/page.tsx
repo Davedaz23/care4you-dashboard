@@ -46,7 +46,7 @@ export default function HospitalLoginPage() {
         role: user.role,
         hospitalId: user.hospitalId,
         hospitalName: user.hospitalName,
-        hospitalData: user.hospitalData
+        // hospitalData: user.hospitalData
       }));
       
       // Redirect to hospital dashboard

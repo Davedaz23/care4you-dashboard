@@ -6,8 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+   "export": "next build && dir out\\"
   },
+  "homepage":"https://careforyou.agabosss.com",
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-select": "^2.2.4",

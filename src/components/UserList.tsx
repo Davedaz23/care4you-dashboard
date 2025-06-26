@@ -3,40 +3,47 @@
 
 import { useEffect, useState } from "react";
 import { getDocs, collection, deleteDoc, doc } from "firebase/firestore";
-import db from "../config/firestoreConfig"; // Adjust this import if necessary
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons from react-icons
+import db from "../config/firestoreConfig";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-type User = {
+// Define a more specific type for User
+type UserRole = 'admin' | 'hospitalAdmin' | 'user';
+
+interface User {
   id: string;
   phone: string;
-  role: string;
+  role: UserRole;
   password: string;
-  [key: string]: any; // Allow extra fields from Firestore if needed
-};
+  // Add other fields if they exist in your Firestore documents
+}
+
+// Define type for predefined users
+interface PredefinedUser extends Omit<User, 'id'> {
+  id: 'admin-account' | 'hospital-admin-account';
+}
 
 export default function UsersList() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [users, setUsers] = useState<(User | PredefinedUser)[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
 
-  // Predefined admin credentials
-  const predefinedUsers = [
+  // Predefined admin credentials with proper typing
+  const predefinedUsers: PredefinedUser[] = [
     {
       id: "admin-account",
       phone: "Admin Account",
       role: "admin",
-      password: "admin123" // This is just for display, not stored in Firebase
+      password: "admin123"
     },
     {
       id: "hospital-admin-account",
       phone: "Hospital Admin Account",
       role: "hospitalAdmin",
-      password: "hospital123" // This is just for display, not stored in Firebase
+      password: "hospital123"
     }
   ];
 
-  // Toggle password visibility
   const togglePasswordVisibility = (userId: string) => {
     setVisiblePasswords(prev => ({
       ...prev,
@@ -47,32 +54,30 @@ export default function UsersList() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const userRef = collection(db, "adminuser"); // Query the "adminuser" collection
+        const userRef = collection(db, "adminuser");
         const querySnapshot = await getDocs(userRef);
 
-        // Map through the documents and get the user data
-        const usersData = querySnapshot.docs.map(doc => {
+        const usersData: User[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
           return {
-            id: doc.id, // Firebase document ID
-            phone: data.phone || "Unknown", // Ensure phone exists
-            role: data.role || "user",      // Ensure role exists
+            id: doc.id,
+            phone: data.phone || "Unknown",
+            role: data.role || "user",
             password: data.password ? "********" : "Not set",
-            ...data // Include any other fields
+            ...data
           };
         });
 
-        // Initialize visibility state for all users
+        // Initialize visibility state
         const initialVisibility: Record<string, boolean> = {};
         [...predefinedUsers, ...usersData].forEach(user => {
           initialVisibility[user.id] = false;
         });
         setVisiblePasswords(initialVisibility);
 
-        // Combine predefined users with fetched users
         setUsers([...predefinedUsers, ...usersData]);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch users");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to fetch users");
       } finally {
         setLoading(false);
       }
@@ -82,7 +87,6 @@ export default function UsersList() {
   }, []);
 
   const handleDelete = async (userId: string) => {
-    // Prevent deletion of predefined accounts
     if (userId === "admin-account" || userId === "hospital-admin-account") {
       alert("Cannot delete predefined admin accounts.");
       return;
@@ -90,13 +94,13 @@ export default function UsersList() {
 
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        setLoading(true); // Show loading during delete
+        setLoading(true);
         const userDocRef = doc(db, "adminuser", userId);
-        await deleteDoc(userDocRef); // Delete the user from Firestore
-        setUsers(users.filter(user => user.id !== userId)); // Update the local state to remove the deleted user
+        await deleteDoc(userDocRef);
+        setUsers(users.filter(user => user.id !== userId));
         alert("User deleted successfully.");
-      } catch (err: any) {
-        setError(err.message || "Failed to delete the user.");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to delete the user.");
       } finally {
         setLoading(false);
       }
@@ -134,7 +138,7 @@ export default function UsersList() {
                 </button>
               </td>
               <td className="border-b px-4 py-2">
-                {!user.id.includes("-account") && ( // Only show delete for non-predefined accounts
+                {!user.id.includes("-account") && (
                   <button
                     onClick={() => handleDelete(user.id)}
                     className="ml-4 text-red-500 hover:underline"

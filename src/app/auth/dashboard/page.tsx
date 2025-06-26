@@ -3,7 +3,7 @@
 const DashboardPage = () => {
   return (
     <div>
-      <p className="text-xl">You're successfully logged in to the Dashboard.</p>
+      <p className="text-xl">You are successfully logged in to the Dashboard.</p>
       <img src="/watermarkimage.png" width={400} alt="" />
     </div>
   );
