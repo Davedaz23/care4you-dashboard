@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation'; // ✅ App Router
+import { Route } from 'next';
 // import { createHospital, updateHospital } from '../services/hospitalService';
 
 type HospitalFormProps = {
@@ -70,7 +71,7 @@ const HospitalForm = ({ initialData, onSubmit }: HospitalFormProps) => {
         <div className="flex justify-end space-x-3">
           <button
             type="button"
-            onClick={() => router.push('/dashboard/hospitals')}
+            onClick={() => router.push('/dashboard/hospitals' as Route)}
             className="px-4 py-2 text-gray-700 border rounded-md hover:bg-gray-100 transition"
           >
             Cancel

@@ -126,12 +126,12 @@ export default function HospitalLoginPage() {
                   Remember me
                 </label>
               </div>
-              <Link 
+              {/* <Link 
                 href="/auth/forgot-password" 
                 className="text-sm text-sky-600 hover:text-sky-500"
               >
                 Forgot password?
-              </Link>
+              </Link> */}
             </div>
 
             <Button
@@ -156,12 +156,12 @@ export default function HospitalLoginPage() {
             </div>
 
             <div className="mt-4">
-              <Link
+              {/* <Link
                 href="/auth/register/hospital"
                 className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 Register your hospital
-              </Link>
+              </Link> */}
             </div>
           </div>
         </CardContent>

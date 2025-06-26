@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-   "export": "next build && dir out\\"
+   "export": "next build "
   },
   "homepage":"https://careforyou.agabosss.com",
   "dependencies": {

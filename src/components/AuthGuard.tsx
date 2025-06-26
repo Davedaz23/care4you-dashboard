@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribeToAuthChanges } from '@/config/auth';
+import { Route } from 'next';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -17,7 +18,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       if (!user) {
         // Clear any existing user data
         localStorage.removeItem('adminUser');
-        router.push('/auth/login');
+        router.push('/auth/login' as Route); // Ensure correct type for router.push
       } else {
         // Store the user data in localStorage
         localStorage.setItem('adminUser', JSON.stringify(user));
