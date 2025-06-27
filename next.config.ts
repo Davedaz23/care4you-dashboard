@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
     WORDPRESS_API_URL: process.env.WORDPRESS_API_URL,
   },
 
+
   // TypeScript settings
   typescript: {
     ignoreBuildErrors: false,
@@ -46,3 +47,4 @@ const nextConfig: NextConfig = {
 }
 
 export default nextConfig
+
