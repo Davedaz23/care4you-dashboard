@@ -46,7 +46,7 @@ export default [
   },
   {
     // JavaScript files configuration (optional)
-    files: ["**/*.js", "**/*.jsx"],
+    files: ["**/*.js", "**/*.jsx","**/*.tsx","**/*.ts"],
     rules: {
       "prefer-const": "error",
     },

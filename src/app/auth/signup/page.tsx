@@ -1,21 +1,22 @@
 'use client';
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { useRouter } from 'next/navigation';
 import { createAdminUser } from "../../../config/auth";
-// Update the path below if your PasswordInput is located elsewhere
 import { PasswordInput } from '../../../components/PasswordInput';
+import type { Route } from 'next';
+
+type Role = 'admin' | 'superadmin';
 
 export default function SignUpPage() {
-  
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("admin");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [role, setRole] = useState<Role>("admin");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -29,12 +30,10 @@ export default function SignUpPage() {
     try {
       const userId = await createAdminUser(phone, password, role);
       localStorage.setItem("adminUser", JSON.stringify({ phone, role, userId }));
-      router.push("/auth/login");
-    }
-     catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
-    }
-     finally {
+  router.push("/auth/login" as Route);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -48,37 +47,44 @@ export default function SignUpPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Phone Number</label>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-600">
+              Phone Number
+            </label>
             <input
-              type="text"
+              id="phone"
+              type="tel"
               placeholder="Enter phone number"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value)}
               required
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
           </div>
 
           <div>
-        <label className="block text-sm font-medium text-gray-600">Password</label>
-      <PasswordInput
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600">
+              Password
+            </label>
+            <PasswordInput
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Enter password"
         required
         />
-        </div>
+          </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Select Role</label>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-600">
+              Select Role
+            </label>
             <select
+              id="role"
               value={role}
-              onChange={e => setRole(e.target.value)}
+              onChange={(e) => setRole(e.target.value as Role)}
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               <option value="admin">Admin</option>
               <option value="superadmin">Super Admin</option>
-              {/* Add more roles if needed */}
             </select>
           </div>
 
@@ -90,6 +96,7 @@ export default function SignUpPage() {
             className={`w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            aria-disabled={loading}
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
@@ -101,6 +108,7 @@ export default function SignUpPage() {
             <a
               href="/auth/login"
               className="text-sky-600 font-medium cursor-pointer hover:underline"
+              aria-label="Login page"
             >
               Login here
             </a>

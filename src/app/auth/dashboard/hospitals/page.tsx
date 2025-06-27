@@ -4,36 +4,51 @@ import { useEffect, useState } from 'react';
 import { fetchHospitals, deleteHospital } from '../../../../services/hospitalService';
 import Link from 'next/link';
 import DeleteModal from '@/components/DeleteModal';
-import { useRouter } from 'next/navigation'; // For navigation after deletion
+import { useRouter } from 'next/navigation';
+
+// Define interface for Hospital
+interface Hospital {
+  id: string;
+  name: string;
+  description?: string;
+  // Add other properties as needed
+}
 
 const HospitalsPage = () => {
-  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [selectedHospital, setSelectedHospital] = useState<any>(null);
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const router = useRouter(); // To navigate programmatically
+  const router = useRouter();
 
   useEffect(() => {
     const loadHospitals = async () => {
-      const data = await fetchHospitals();
-      setHospitals(data);
-      setLoading(false);
+      try {
+        const data = await fetchHospitals();
+        setHospitals(data);
+      } catch (error) {
+        console.error('Failed to fetch hospitals:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadHospitals();
   }, []);
 
-  const openDeleteModal = (hospital: any) => {
+  const openDeleteModal = (hospital: Hospital) => {
     setSelectedHospital(hospital);
     setIsModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (selectedHospital) {
+    if (!selectedHospital) return;
+    
+    try {
       await deleteHospital(selectedHospital.id);
       setHospitals(hospitals.filter(h => h.id !== selectedHospital.id));
       setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to delete hospital:', error);
     }
   };
 
@@ -41,12 +56,12 @@ const HospitalsPage = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Hospitals</h1>
-        <Link
-          href="/auth/dashboard/new"
+        {/* <Link
+          href="/auth/dashboard/hospitals/new"
           className="bg-[#00b4d8] hover:bg-[#009fc5] text-white px-6 py-2 rounded-lg shadow transition"
         >
           + Add Hospital
-        </Link>
+        </Link> */}
       </div>
 
       {loading ? (
@@ -62,15 +77,18 @@ const HospitalsPage = () => {
             >
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-gray-800">{h.name}</h2>
-                <p className="text-gray-600 mt-1">{h.description}</p>
+                {h.description && (
+                  <p className="text-gray-600 mt-1">{h.description}</p>
+                )}
               </div>
               <div className="flex justify-end space-x-3">
-                <Link
+                {/* <Link
                   href={`/auth/dashboard/hospitals/${h.id}`}
                   className="bg-[#00b4d8] hover:bg-[#009fc5] text-white px-4 py-1.5 rounded-md text-sm transition"
                 >
                   Edit
-                </Link>
+                </Link> */}
+                <h1>Edit</h1>
                 <button
                   onClick={() => openDeleteModal(h)}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm transition"
