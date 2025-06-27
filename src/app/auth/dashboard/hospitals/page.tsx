@@ -65,12 +65,12 @@ const HospitalsPage = () => {
                 <p className="text-gray-600 mt-1">{h.description}</p>
               </div>
               <div className="flex justify-end space-x-3">
-                <Link
+                {/* <Link
                   href={`/auth/dashboard/hospitals/${h.id}`}
                   className="bg-[#00b4d8] hover:bg-[#009fc5] text-white px-4 py-1.5 rounded-md text-sm transition"
                 >
                   Edit
-                </Link>
+                </Link> */}
                 <button
                   onClick={() => openDeleteModal(h)}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm transition"

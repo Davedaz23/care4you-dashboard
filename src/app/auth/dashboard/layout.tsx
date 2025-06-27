@@ -15,6 +15,7 @@ import {
   X,
   UserPlus
 } from 'lucide-react';
+import { Route } from 'next';
 
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
@@ -116,12 +117,12 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             <footer className="bg-white border-t border-gray-200 p-4 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
               <span>© 2025 Hospital Management System</span>
               <div className="space-x-3">
-                <Link href="/privacy" className="hover:underline">
+                {/* <Link href="/privacy" className="hover:underline">
                   Privacy Policy
                 </Link>
                 <Link href="/terms" className="hover:underline">
                   Terms & Conditions
-                </Link>
+                </Link> */}
               </div>
             </footer>
           </div>
@@ -144,14 +145,14 @@ const SidebarLink = ({
   label: string;
   white?: boolean;
 }) => (
-  <Link
-    href={href}
-    className={`flex items-center gap-3 ${
-      white ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-sky-100'
-    } px-4 py-2 rounded-md transition-all duration-200`}
-  >
-    {icon}
-    <span>{label}</span>
-  </Link>
+<Link
+  href={href as Route}
+  className={`flex items-center gap-3 ${
+    white ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-sky-100'
+  } px-4 py-2 rounded-md transition-all duration-200`}
+>
+  {icon}
+  <span>{label}</span>
+</Link>
 );
 

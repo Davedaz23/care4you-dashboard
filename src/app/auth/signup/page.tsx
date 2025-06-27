@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createAdminUser } from "../../../config/auth";
 // Update the path below if your PasswordInput is located elsewhere
 import { PasswordInput } from '../../../components/PasswordInput';
+import { Route } from "next";
 
 export default function SignUpPage() {
   
@@ -29,7 +30,7 @@ export default function SignUpPage() {
     try {
       const userId = await createAdminUser(phone, password, role);
       localStorage.setItem("adminUser", JSON.stringify({ phone, role, userId }));
-      router.push("/auth/login");
+      router.push("/auth/login" as Route);
     }
      catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");

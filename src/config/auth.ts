@@ -7,11 +7,47 @@ import {
   doc, 
   setDoc,
   addDoc,
+  updateDoc,
   onSnapshot
 } from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import db from "./firestoreConfig";
 import { v4 as uuid } from "uuid";
+
+
+export const changePassword = async (
+  uid: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  try {
+    // 1. Verify current password
+    const userDoc = await getDoc(doc(db, "adminuser", uid));
+    if (!userDoc.exists()) {
+      throw new Error("User not found");
+    }
+
+    const userData = userDoc.data();
+    const isPasswordValid = await bcrypt.compare(currentPassword, userData.password);
+    if (!isPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    // 2. Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 3. Update password in Firestore
+    await updateDoc(doc(db, "adminuser", uid), {
+      password: hashedPassword,
+      updatedAt: new Date().toISOString()
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
+};
 
 // Add this function to your exports
 export const subscribeToAuthChanges = (callback: (user: any | null) => void) => {
