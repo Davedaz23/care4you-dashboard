@@ -44,14 +44,13 @@ export const fetchHospitalById = async (id: string) => {
 export const updateHospital = async (id: string, data: any, imageFile?: File) => {
   const docRef = doc(db, 'hospitals', id);
 
-  // Change from let to const since we're not reassigning the variable
   const updatedData = { ...data };
 
   if (imageFile) {
     const imageRef = ref(storage, `hospitals/${Date.now()}_${imageFile.name}`);
     await uploadBytes(imageRef, imageFile);
     const photoURL = await getDownloadURL(imageRef);
-    updatedData.photo = photoURL; // This modifies the object, but doesn't reassign the variable
+    updatedData.photo = photoURL;
   }
 
   await updateDoc(docRef, updatedData);

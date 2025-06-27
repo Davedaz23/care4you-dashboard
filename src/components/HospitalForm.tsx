@@ -1,9 +1,9 @@
 // components/HospitalForm.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // ✅ App Router
-// import { createHospital, updateHospital } from '../services/hospitalService';
+import { createHospital, updateHospital } from '../services/hospitalService';
 
 type HospitalFormProps = {
   initialData?: any; // For Edit
