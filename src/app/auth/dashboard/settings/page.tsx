@@ -1,10 +1,14 @@
 'use client';
 
-import  React, { useState, useEffect } from 'react';
-import { Settings, User, Lock, Bell, Shield, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, User, Lock, Bell, Shield, Mail, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { changePassword } from '@/config/auth'; // Import the function
+import { useAdminAuth } from '@/context/authContext';
+
 
 const SettingsPage = () => {
+  const { user } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     name: '',
@@ -16,13 +20,16 @@ const SettingsPage = () => {
     notifications: true,
     twoFactorAuth: false,
   });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Simulate fetching user data
     setFormData({
       name: 'Admin User',
       email: 'admin@care4you.com',
-      phone: '+1234567890',
+      phone: user?.phone ?? '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
@@ -39,14 +46,92 @@ const SettingsPage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your form submission logic here
-    toast.success('Settings updated successfully!');
+    
+    if (!isPasswordFormValid()) {
+      toast.error('Please fill all fields correctly');
+      return;
+    }
+
+    try {
+      if (!user?.uid) {
+        throw new Error('User not authenticated');
+      }
+
+      await changePassword(
+        user.uid,
+        formData.currentPassword,
+        formData.newPassword
+      );
+
+      toast.success('Password changed successfully!');
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }));
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to change password');
+    }
+  };
+
+
+  const getPasswordStrength = (password: string) => {
+    if (password.length === 0) return '';
+    if (password.length < 6) return 'Weak';
+    if (password.length < 10) return 'Medium';
+    return 'Strong';
+  };
+
+  const validatePassword = (password: string) => {
+  const minLength = 8;
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  
+  return {
+    isValid: password.length >= minLength && hasNumber && hasSpecialChar,
+    messages: [
+      password.length >= minLength ? '' : `At least ${minLength} characters`,
+      hasNumber ? '' : 'At least one number',
+      hasSpecialChar ? '' : 'At least one special character',
+    ].filter(msg => msg !== '')
+  };
+};
+
+// Update your password strength indicator:
+{formData.newPassword && (
+  <div className="mt-1 text-xs text-gray-500">
+    Password strength: <span className={`font-medium ${
+      getPasswordStrength(formData.newPassword) === 'Weak' ? 'text-red-500' :
+      getPasswordStrength(formData.newPassword) === 'Medium' ? 'text-yellow-500' :
+      'text-green-500'
+    }`}>
+      {getPasswordStrength(formData.newPassword)}
+    </span>
+    {validatePassword(formData.newPassword).messages.length > 0 && (
+      <ul className="mt-1 list-disc list-inside">
+        {validatePassword(formData.newPassword).messages.map((msg, i) => (
+          <li key={i} className="text-red-500">{msg}</li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
+
+  const isPasswordFormValid = () => {
+    return (
+      formData.currentPassword &&
+      formData.newPassword &&
+      formData.confirmPassword &&
+      formData.newPassword === formData.confirmPassword &&
+      formData.newPassword.length >= 6
+    );
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Settings</h1>
       
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -97,7 +182,7 @@ const SettingsPage = () => {
             {activeTab === 'profile' && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Profile Information</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
@@ -153,67 +238,123 @@ const SettingsPage = () => {
             )}
             
             {activeTab === 'security' && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Security Settings</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Security Settings</h2>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       Current Password
                     </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      name="currentPassword"
-                      value={formData.currentPassword}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        id="currentPassword"
+                        name="currentPassword"
+                        value={formData.currentPassword}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      >
+                        {showCurrentPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   
                   <div>
                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       New Password
                     </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      name="newPassword"
-                      value={formData.newPassword}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        id="newPassword"
+                        name="newPassword"
+                        value={formData.newPassword}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {formData.newPassword && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Password strength: <span className={`font-medium ${
+                          getPasswordStrength(formData.newPassword) === 'Weak' ? 'text-red-500' :
+                          getPasswordStrength(formData.newPassword) === 'Medium' ? 'text-yellow-500' :
+                          'text-green-500'
+                        }`}>
+                          {getPasswordStrength(formData.newPassword)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       Confirm New Password
                     </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
+                      <p className="mt-1 text-xs text-red-500">Passwords don't match</p>
+                    )}
                   </div>
                   
                   <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
-                    >
-                      Update Password
-                    </button>
-                  </div>
-                </form>
-              </div>
+              <button
+                type="submit"
+                disabled={!isPasswordFormValid()}
+                className={`px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+              !isPasswordFormValid() ? 'opacity-50 cursor-not-allowed' : ''
+               }`}
+                 >
+            Update Password
+              </button>
+            </div>
+          </form>
+         </div>
             )}
             
             {activeTab === 'notifications' && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Notification Preferences</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -243,7 +384,7 @@ const SettingsPage = () => {
             {activeTab === 'privacy' && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Privacy Settings</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -273,7 +414,7 @@ const SettingsPage = () => {
             {activeTab === 'email' && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Settings</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Frequency
