@@ -1,49 +1,17 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
-  // Core static export configuration
-  output: 'export',
-  distDir: 'out',
-   basePath: '/care4you', // Add this line
-   assetPrefix: './', // Makes all asset paths relative
-  trailingSlash: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  // Disable static export
+  output: undefined, // Explicitly remove static export
   
-  // App Directory configuration (moved out of experimental)
-  appDir: true, // Only include if using App Router
-  
-  // Image handling
-  images: {
-    unoptimized: true,
-    domains: [], // Add your WordPress domain if loading images from there
-  },
-
-  // Production optimizations
-  productionBrowserSourceMaps: false,
-  optimizeFonts: true,
-  
-  // Webpack configuration
-  webpack: (config, { isServer }) => {
-    return config
-  },
-
-  // Environment variables
-  env: {
-    WORDPRESS_API_URL: process.env.WORDPRESS_API_URL,
-  },
-
-  // TypeScript settings
+  // TypeScript server configuration
   typescript: {
-    ignoreBuildErrors: false,
-    tsconfigPath: './tsconfig.json',
+    ignoreBuildErrors: false, // Set to true in development if needed
   },
-
-  // Remaining experimental features
-  experimental: {
-    typedRoutes: true, // Better TypeScript support for routes
-    
-    // Other valid experimental features could go here
-    // serverActions: true, // Example of another experimental feature
-  }
+  
+  // Plesk-specific settings
+  distDir: '.next',
+  compress: true,
 }
 
-export default nextConfig
+module.exports = nextConfig
