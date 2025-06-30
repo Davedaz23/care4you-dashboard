@@ -1,9 +1,8 @@
 'use client';
-
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Link, { LinkProps } from 'next/link';
 import { useAdminAuth } from '@/context/authContext';
-import Link from 'next/link';
 import {
   Home,
   Users,
@@ -12,11 +11,37 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
+import Image from 'next/image';
 
+interface SidebarLinkProps extends LinkProps<string> {
+  icon: React.ReactNode;
+  label: string;
+  white?: boolean;
+}
 
-const RootLayout = ({ children }: { children: React.ReactNode }) => {
+const SidebarLink = ({ href, icon, label, white = false, ...props }: SidebarLinkProps) => {
+  return (
+    <Link
+      href={href}
+      {...props}
+      className={`flex items-center gap-3 ${
+        white ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-sky-100'
+      } px-4 py-2 rounded-md transition-all duration-200`}
+    >
+      {icon}
+      <span>{label}</span>
+    </Link>
+  );
+};
+
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+const RootLayout = ({ children }: RootLayoutProps) => {
   const { user, loading } = useAdminAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,68 +103,42 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
 </div>
 
 
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col">
-            {/* Top Navbar */}
-            <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm flex items-center justify-between md:px-6">
-              <div className="flex items-center gap-4">
-                {/* Hamburger for mobile */}
-                <button
-                  className="md:hidden text-sky-600"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                  <Menu size={24} />
-                </button>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                  Welcome, {user?.role?.toUpperCase()}
-                </h1>
-              </div>
-              <span className="text-sm text-gray-500">{user?.phone}</span>
-            </header>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          {/* Top Navbar */}
+          <header className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm flex items-center justify-between md:px-6">
+            <div className="flex items-center gap-4">
+              <button
+                className="md:hidden text-sky-600"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu size={24} />
+              </button>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                Welcome, {user?.name || 'Admin'}
+              </h1>
+            </div>
+            {user?.phone && (
+              <span className="text-sm text-gray-500">
+                {user.phone}
+              </span>
+            )}
+          </header>
 
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-
-            {/* Footer */}
-            <footer className="bg-white border-t border-gray-200 p-4 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
-              <span>© 2025 Hospital Management System</span>
-              <div className="space-x-3">
-                <Link href="/privacy" className="hover:underline">
-                  Privacy Policy
-                </Link>
-                <Link href="/terms" className="hover:underline">
-                  Terms & Conditions
-                </Link>
-              </div>
-            </footer>
-          </div>
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+          
+          {/* Footer */}
+          <footer className="bg-white border-t border-gray-200 p-4 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
+            <span>© 2025 Hospital Management System</span>
+            <div className="space-x-3">
+              {/* Optional links can be added here */}
+            </div>
+          </footer>
         </div>
-      </body>
-    </html>
+      </div>
+    </div>
   );
 };
 
 export default RootLayout;
-
-const SidebarLink = ({
-  href,
-  icon,
-  label,
-  white = false,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  white?: boolean;
-}) => (
-  <Link
-    href={href}
-    className={`flex items-center gap-3 ${
-      white ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-sky-100'
-    } px-4 py-2 rounded-md transition-all duration-200`}
-  >
-    {icon}
-    <span>{label}</span>
-  </Link>
-);
-

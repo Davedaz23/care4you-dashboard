@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribeToAuthChanges } from '@/config/auth';
+import { Route } from 'next';
+import { Route } from 'next';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -15,16 +17,28 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       if (!user) {
-        router.push('/auth/login');
+        // Clear any existing user data
+        localStorage.removeItem('adminUser');
+        router.push('/auth/login' as Route);
       } else {
+        // Store the user data in localStorage
+        localStorage.setItem('adminUser', JSON.stringify(user));
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [router]);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="text-sky-600 font-semibold">Loading...</span>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 };

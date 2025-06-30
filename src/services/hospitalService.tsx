@@ -6,7 +6,8 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
-  doc
+  doc,
+  DocumentData
 } from 'firebase/firestore';
 import {
   ref,

@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Proxy to Node.js server
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ http://localhost:3000/$1 [P]
+  
+  # Handle Next.js files directly
+  RewriteCond %{REQUEST_URI} ^/_next
+  RewriteRule ^/_next/(.*) /_next/$1 [L]
+</IfModule>

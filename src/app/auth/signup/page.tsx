@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { useRouter } from 'next/navigation';
 import { createAdminUser } from "../../../config/auth";
+import { PasswordInput } from '../../../components/PasswordInput';
+import type { Route } from 'next';
+
+type Role = 'admin' | 'superadmin';
 
 type UserRole = 'admin' | 'superadmin'; // Define possible roles
 
@@ -63,7 +67,9 @@ export default function SignUpPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Phone Number</label>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-600">
+              Phone Number
+            </label>
             <input
               type="text"
               name="phone"
@@ -89,7 +95,9 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Select Role</label>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-600">
+              Select Role
+            </label>
             <select
               name="role"
               value={role}
@@ -109,6 +117,7 @@ export default function SignUpPage() {
             className={`w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            aria-disabled={loading}
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>

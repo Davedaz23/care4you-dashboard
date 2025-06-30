@@ -1,13 +1,17 @@
-import type { NextConfig } from "next";
-
-module.exports = {
-  images: {
-    domains: ['thumbs.dreamstime.com'], // Add this line
-  },
-};
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  // Disable static export
+  output: undefined, // Explicitly remove static export
   
-};
+  // TypeScript server configuration
+  typescript: {
+    ignoreBuildErrors: false, // Set to true in development if needed
+  },
+  
+  // Plesk-specific settings
+  distDir: '.next',
+  compress: true,
+}
 
-export default nextConfig;
+module.exports = nextConfig

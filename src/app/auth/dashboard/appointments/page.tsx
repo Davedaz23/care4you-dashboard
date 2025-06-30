@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/config/firebaseConfig";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,7 +28,8 @@ export default function AppointmentManager() {
     phoneNumber: "",
     hospitalName: "",
     hospitalID: "",
-    app_date: new Date(),
+    app_date: format(new Date(), "yyyy-MM-dd"),
+    app_time: "09:00",
     address: "",
     description: "",
   });
@@ -58,30 +52,52 @@ export default function AppointmentManager() {
   };
 
   const handleSubmit = async () => {
-    const payload = {
-      ...form,
-      app_date: form.app_date.toISOString().split("T")[0],
-    };
-
-    if (editId) {
-      await updateDoc(doc(db, "appointments", editId), payload);
-    } else {
-      await addDoc(collection(db, "appointments"), payload);
+    if (!form.fullName || !form.phoneNumber || !form.hospitalID) {
+      alert("Please fill in all required fields");
+      return;
     }
-    setForm({
-      fullName: "",
-      email: "",
-      phoneNumber: "",
-      hospitalName: "",
-      hospitalID: "",
-      app_date: new Date(),
-      address: "",
-      description: "",
-    });
-    setEditId(null);
-    fetchAppointments();
+
+    setLoading(true);
+    try {
+      const payload = {
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        hospitalName: form.hospitalName,
+        hospitalID: form.hospitalID,
+        app_date: form.app_date,
+        app_time: form.app_time,
+        address: form.address,
+        description: form.description,
+      };
+
+      if (editId) {
+        await updateDoc(doc(db, "appointments", editId), payload);
+      } else {
+        await addDoc(collection(db, "appointments"), payload);
+      }
+      
+      setForm({
+        fullName: "",
+        email: "",
+        phoneNumber: "",
+        hospitalName: "",
+        hospitalID: "",
+        app_date: format(new Date(), "yyyy-MM-dd"),
+        app_time: "09:00",
+        address: "",
+        description: "",
+      });
+      setEditId(null);
+      fetchAppointments();
+    } catch (error) {
+      console.error("Error saving appointment:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleEdit = (appointment: Appointment) => {
   const handleEdit = (appointment: Appointment) => {
     setForm({
       fullName: appointment.fullName,
@@ -89,7 +105,8 @@ export default function AppointmentManager() {
       phoneNumber: appointment.phoneNumber,
       hospitalName: appointment.hospitalName,
       hospitalID: appointment.hospitalID,
-      app_date: new Date(appointment.app_date),
+      app_date: appointment.app_date || format(new Date(), "yyyy-MM-dd"),
+      app_time: appointment.app_time || "09:00",
       address: appointment.address,
       description: appointment.description,
     });
@@ -103,76 +120,193 @@ export default function AppointmentManager() {
 
   useEffect(() => {
     fetchAppointments();
+    fetchHospitals();
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-      <Card>
-        <CardContent className="space-y-2 p-4">
-          <h2 className="text-xl font-semibold">
-            {editId ? "Edit Appointment" : "Add Appointment"}
-          </h2>
-          <Input
-            placeholder="Full Name"
-            value={form.fullName}
-            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          />
-          <Input
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-          <Input
-            placeholder="Phone Number"
-            value={form.phoneNumber}
-            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-          />
-          <Input
-            placeholder="Hospital Name"
-            value={form.hospitalName}
-            onChange={(e) => setForm({ ...form, hospitalName: e.target.value })}
-          />
-          <Input
-            placeholder="Hospital ID"
-            value={form.hospitalID}
-            onChange={(e) => setForm({ ...form, hospitalID: e.target.value })}
-          />
-          <Input
-            type="date"
-            value={format(form.app_date, "yyyy-MM-dd")}
-            onChange={(e) =>
-              setForm({ ...form, app_date: new Date(e.target.value) })
-            }
-          />
-          <Input
-            placeholder="Address"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-          <Input
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <Button onClick={handleSubmit}>{editId ? "Update" : "Create"}</Button>
-        </CardContent>
-      </Card>
-      <div className="space-y-4">
-        {appointments.map((a) => (
-          <Card key={a.id} className="p-4 space-y-2">
-            <p className="font-bold">{a.fullName}</p>
-            <p>{a.email}</p>
-            <p>{a.phoneNumber}</p>
-            <p>{a.hospitalName}</p>
-            <p>{a.app_date}</p>
-            <div className="flex gap-2">
-              <Button onClick={() => handleEdit(a)}>Edit</Button>
-              <Button variant="destructive" onClick={() => handleDelete(a.id)}>
-                Delete
-              </Button>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Appointment Manager</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Appointment Form */}
+        <Card className="shadow-md">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {editId ? "Edit Appointment" : "Create New Appointment"}
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <Input
+                  placeholder="Patient's full name"
+                  value={form.fullName}
+                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <Input
+                    placeholder="Patient's phone"
+                    value={form.phoneNumber}
+                    onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hospital *</label>
+                <Select onValueChange={handleHospitalSelect} value={form.hospitalID}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a hospital" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital.id} value={hospital.id}>
+                        {hospital.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                  <Input
+                    type="date"
+                    value={form.app_date}
+                    onChange={(e) => setForm({ ...form, app_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time *</label>
+                  <Input
+                    type="time"
+                    value={form.app_time}
+                    onChange={(e) => setForm({ ...form, app_time: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <Input
+                  placeholder="Additional notes"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-2">
+                {editId && (
+                  <Button 
+                    variant="default" 
+                    onClick={() => {
+                      setEditId(null);
+                      setForm({
+                        fullName: "",
+                        email: "",
+                        phoneNumber: "",
+                        hospitalName: "",
+                        hospitalID: "",
+                        app_date: format(new Date(), "yyyy-MM-dd"),
+                        app_time: "09:00",
+                        address: "",
+                        description: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? "Processing..." : editId ? "Update Appointment" : "Create Appointment"}
+                </Button>
+              </div>
             </div>
-          </Card>
-        ))}
+          </CardContent>
+        </Card>
+
+        {/* Appointments List */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Appointments</h2>
+          
+          {loading && appointments.length === 0 ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : appointments.length === 0 ? (
+            <Card className="py-8 text-center">
+              <p className="text-gray-500">No appointments scheduled</p>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {appointments.map((appointment) => (
+                <Card key={appointment.id} className="hover:shadow-md transition-shadow border-l-4 border-blue-500">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-800">{appointment.fullName}</h3>
+                        <p className="text-sm text-gray-600 mt-1 bg-gray-100 p-2 rounded">
+                          <span className="font-medium">Hospital:</span> {appointment.hospitalName}
+                        </p>
+                      </div>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        {appointment.app_time}
+                      </span>
+                    </div>
+                    
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <p className="text-sm">
+                        <span className="font-medium">Phone:</span> {appointment.phoneNumber}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-3 p-2 bg-gray-50 rounded">
+                      <p className="font-medium">
+                        {appointment.formattedDate}
+                      </p>
+                    </div>
+                    
+                    {appointment.description && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">Notes:</span> {appointment.description}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button 
+                        variant="default" 
+                        onClick={() => handleEdit(appointment)}
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => handleDelete(appointment.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

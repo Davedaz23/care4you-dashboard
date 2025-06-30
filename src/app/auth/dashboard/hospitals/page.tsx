@@ -61,13 +61,13 @@ const HospitalsPage = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Hospitals</h1>
-        <Link
-          href="/auth/dashboard/new"
+        {/* <Link
+          href="/auth/dashboard/hospitals/new"
           className="bg-[#00b4d8] hover:bg-[#009fc5] text-white px-6 py-2 rounded-lg shadow transition"
           aria-label="Add new hospital"
         >
           + Add Hospital
-        </Link>
+        </Link> */}
       </div>
 
       {loading ? (
@@ -102,7 +102,8 @@ const HospitalsPage = () => {
                   aria-label={`Edit ${hospital.name}`}
                 >
                   Edit
-                </Link>
+                </Link> */}
+                <h1>Edit</h1>
                 <button
                   onClick={() => openDeleteModal(hospital)}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm transition"

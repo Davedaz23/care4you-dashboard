@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { loginWithPhone } from "../../../config/auth";
+import { useAdminAuth } from "@/context/authContext"; // Import the auth context
+// Update the path below if your PasswordInput is located elsewhere
+import { PasswordInput } from '../../../components/PasswordInput';
 
 interface LoginForm {
   phone: string;
@@ -17,6 +20,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setUser } = useAdminAuth(); // Get setUser from context
 
   const { phone, password } = form;
 
@@ -67,8 +71,10 @@ export default function LoginPage() {
               value={phone}
               onChange={handleChange}
               required
+              pattern="[0-9]{10}"  // Basic validation for 10 digits
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
+            <p className="text-xs text-gray-500 mt-1">Enter 10-digit phone number without symbols</p>
           </div>
 
           <div>
@@ -97,7 +103,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        {/* <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             Don&apos;t have an account?{" "}
             <span
@@ -107,7 +113,7 @@ export default function LoginPage() {
               Create an account
             </span>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
