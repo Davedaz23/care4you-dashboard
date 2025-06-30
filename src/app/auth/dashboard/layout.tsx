@@ -57,7 +57,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <SidebarLink href="/auth/dashboard/Users" icon={<Users size={20} />} label="User List" white />
       <SidebarLink href="/auth/dashboard/appointments" icon={<Calendar size={20} />} label="Appointments" white />
       <SidebarLink href="/auth/dashboard/patients" icon={<Users size={20} />} label="Patients" white />
-      <SidebarLink href="/auth/dashboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
+      <SidebarLink href="/auth/dashsboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
       <SidebarLink href="/auth/dashboard/reports" icon={<FileText size={20} />} label="Reports" white />
       <SidebarLink href="/auth/dashboard/settings" icon={<Settings size={20} />} label="Settings" white />
     </nav>

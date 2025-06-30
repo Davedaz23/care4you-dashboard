@@ -1,8 +1,13 @@
-import { getDocs, query, where, getDoc, collection, doc, setDoc } from "firebase/firestore";
+import { getDocs, query, where,  collection, doc, setDoc } from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import db from "./firestoreConfig";
 import { v4 as uuid } from "uuid";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "./firebaseConfig";
 
+export const subscribeToAuthChanges = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
 // Login with phone number
 export const loginWithPhone = async (phone: string, password: string) => {
   const userRef = collection(db, "adminuser");

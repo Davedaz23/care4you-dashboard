@@ -1,17 +1,18 @@
-// pages/dashboard/hospitals/[id].tsx OR app/dashboard/hospitals/[id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation'; // ✅ both from App Router
+import { useRouter, useParams } from 'next/navigation';
 import { fetchHospitalById, updateHospital } from '@/services/hospitalService';
 import HospitalForm from '@/components/HospitalForm';
+import { Hospital } from '@/types/hospital';
 
 const EditHospitalPage = () => {
-  const [hospital, setHospital] = useState<any | null>(null);
+  const [hospital, setHospital] = useState<Hospital | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  const params = useParams(); // 👈 this gives you route params
+  const params = useParams();
   const id = params?.id as string;
 
   useEffect(() => {
@@ -20,32 +21,38 @@ const EditHospitalPage = () => {
       try {
         const data = await fetchHospitalById(id);
         setHospital(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching hospital:', error);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load hospital');
+      } finally {
         setLoading(false);
       }
     };
 
     loadHospital();
   }, [id]);
+const handleEditHospital = async (data: Omit<Hospital, 'id'>) => {
 
-  const handleEditHospital = async (data: any) => {
+  // const handleEditHospital = async (data: Omit<Hospital, 'id'>) => {
     try {
       await updateHospital(id, data);
       router.push('/auth/dashboard/hospitals');
-    } catch (error) {
-      console.error('Error updating hospital:', error);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update hospital');
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-
-  if (!hospital) return <p>Hospital not found.</p>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!hospital) return <div>Hospital not found</div>;
 
   return (
     <div className="p-6">
-      <HospitalForm initialData={hospital} onSubmit={handleEditHospital} />
+      <HospitalForm 
+        initialData={hospital}
+        onSubmit={handleEditHospital}
+        onCancel={() => router.push('/auth/dashboard/hospitals')}
+      />
     </div>
   );
 };

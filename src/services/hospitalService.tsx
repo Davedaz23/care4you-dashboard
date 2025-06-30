@@ -11,51 +11,161 @@ import {
 import {
   ref,
   uploadBytes,
-  getDownloadURL
+  getDownloadURL,
+  deleteObject
 } from 'firebase/storage';
 
-export const fetchHospitals = async () => {
-  const snapshot = await getDocs(collection(db, 'hospitals'));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
+interface Hospital {
+  id: string;
+  name: string;
+  description: string;
+  photo?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-export const createHospital = async (hospital: any, imageFile?: File) => {
-  let photoURL = '';
-  if (imageFile) {
-    const imageRef = ref(storage, `hospitals/${Date.now()}_${imageFile.name}`);
-    await uploadBytes(imageRef, imageFile);
-    photoURL = await getDownloadURL(imageRef);
+export const createHospital = async (
+  hospital: Omit<Hospital, 'id' | 'photo'>,
+  imageFile?: File
+): Promise<Hospital> => {
+  try {
+    let photoURL = '';
+    if (imageFile) {
+      const imageRef = ref(storage, `hospitals/${Date.now()}_${imageFile.name}`);
+      await uploadBytes(imageRef, imageFile);
+      photoURL = await getDownloadURL(imageRef);
+    }
+
+    const newHospital = {
+      ...hospital,
+      photo: photoURL,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const docRef = await addDoc(collection(db, 'hospitals'), newHospital);
+    
+    return {
+      id: docRef.id,
+      ...newHospital
+    };
+  } catch (error) {
+    console.error('Error creating hospital:', error);
+    throw new Error('Failed to create hospital');
   }
-  const newHospital = { ...hospital, photo: photoURL };
-  const docRef = await addDoc(collection(db, 'hospitals'), newHospital);
-  return docRef.id;
 };
 
-export const fetchHospitalById = async (id: string) => {
-  const docRef = doc(db, 'hospitals', id);
-  const hospitalSnap = await getDoc(docRef);
-  if (hospitalSnap.exists()) {
-    return { id: hospitalSnap.id, ...hospitalSnap.data() };
-  } else {
-    throw new Error('Hospital not found');
+export const fetchHospitals = async (): Promise<Hospital[]> => {
+  try {
+    const snapshot = await getDocs(collection(db, "hospitals"));
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || '',
+        description: data.description || '',
+        photo: data.photo || '',
+        createdAt: data.createdAt?.toDate() || null,
+        updatedAt: data.updatedAt?.toDate() || null
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching hospitals:', error);
+    throw new Error('Failed to fetch hospitals');
   }
 };
 
-export const updateHospital = async (id: string, data: any, imageFile?: File) => {
-  const docRef = doc(db, 'hospitals', id);
+export const fetchHospitalById = async (id: string): Promise<Hospital> => {
+  try {
+    const docRef = doc(db, 'hospitals', id);
+    const hospitalSnap = await getDoc(docRef);
+    
+    if (!hospitalSnap.exists()) {
+      throw new Error('Hospital not found');
+    }
 
-  let updatedData = { ...data };
-
-  if (imageFile) {
-    const imageRef = ref(storage, `hospitals/${Date.now()}_${imageFile.name}`);
-    await uploadBytes(imageRef, imageFile);
-    const photoURL = await getDownloadURL(imageRef);
-    updatedData.photo = photoURL;
+    const data = hospitalSnap.data();
+    return {
+      id: hospitalSnap.id,
+      name: data.name || '',
+      description: data.description || '',
+      photo: data.photo || '',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null
+    };
+  } catch (error) {
+    console.error(`Error fetching hospital with ID ${id}:`, error);
+    throw error;
   }
-
-  await updateDoc(docRef, updatedData);
 };
 
-export const deleteHospital = async (id: string) => {
-  await deleteDoc(doc(db, 'hospitals', id));
+export const updateHospital = async (
+  id: string,
+  data: Omit<Hospital, 'id' | 'photo'>,
+  imageFile?: File
+): Promise<void> => {
+  try {
+    const docRef = doc(db, 'hospitals', id);
+    const hospitalSnap = await getDoc(docRef);
+    
+    if (!hospitalSnap.exists()) {
+      throw new Error('Hospital not found');
+    }
+
+    const currentData = hospitalSnap.data();
+    let photoURL = currentData.photo || '';
+    
+    // Delete old image if new one is provided
+    if (imageFile && currentData.photo) {
+      try {
+        const oldImageRef = ref(storage, currentData.photo);
+        await deleteObject(oldImageRef);
+      } catch (error) {
+        console.warn('Error deleting old image:', error);
+      }
+    }
+
+    // Upload new image if provided
+    if (imageFile) {
+      const imageRef = ref(storage, `hospitals/${Date.now()}_${imageFile.name}`);
+      await uploadBytes(imageRef, imageFile);
+      photoURL = await getDownloadURL(imageRef);
+    }
+
+    await updateDoc(docRef, {
+      ...data,
+      photo: photoURL,
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error(`Error updating hospital with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteHospital = async (id: string): Promise<void> => {
+  try {
+    const docRef = doc(db, 'hospitals', id);
+    const hospitalSnap = await getDoc(docRef);
+    
+    if (!hospitalSnap.exists()) {
+      throw new Error('Hospital not found');
+    }
+
+    // Delete associated image if exists
+    const data = hospitalSnap.data();
+    if (data.photo) {
+      try {
+        const imageRef = ref(storage, data.photo);
+        await deleteObject(imageRef);
+      } catch (error) {
+        console.warn('Error deleting hospital image:', error);
+      }
+    }
+
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting hospital with ID ${id}:`, error);
+    throw error;
+  }
 };

@@ -4,13 +4,33 @@ import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { createAdminUser } from "../../../config/auth";
 
+type UserRole = 'admin' | 'superadmin'; // Define possible roles
+
+interface SignUpForm {
+  phone: string;
+  password: string;
+  role: UserRole;
+}
+
 export default function SignUpPage() {
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("admin");
-  const [error, setError] = useState("");
+  const [form, setForm] = useState<SignUpForm>({
+    phone: "",
+    password: "",
+    role: "admin"
+  });
+  const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const { phone, password, role } = form;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +47,8 @@ export default function SignUpPage() {
       const userId = await createAdminUser(phone, password, role);
       localStorage.setItem("adminUser", JSON.stringify({ phone, role, userId }));
       router.push("/auth/login");
-    } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -46,9 +66,10 @@ export default function SignUpPage() {
             <label className="block text-sm font-medium text-gray-600">Phone Number</label>
             <input
               type="text"
+              name="phone"
               placeholder="Enter phone number"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={handleChange}
               required
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
@@ -58,9 +79,10 @@ export default function SignUpPage() {
             <label className="block text-sm font-medium text-gray-600">Password</label>
             <input
               type="password"
+              name="password"
               placeholder="Enter password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={handleChange}
               required
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
@@ -69,13 +91,13 @@ export default function SignUpPage() {
           <div>
             <label className="block text-sm font-medium text-gray-600">Select Role</label>
             <select
+              name="role"
               value={role}
-              onChange={e => setRole(e.target.value)}
+              onChange={handleChange}
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               <option value="admin">Admin</option>
               <option value="superadmin">Super Admin</option>
-              {/* Add more roles if needed */}
             </select>
           </div>
 
@@ -97,7 +119,7 @@ export default function SignUpPage() {
             Already have an account?{" "}
             <a
               href="/auth/login"
-              className="text-sky-600 font-medium cursor-pointer hover:underline"
+              className="text-sky-600 font-medium hover:underline"
             >
               Login here
             </a>

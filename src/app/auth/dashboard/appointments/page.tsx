@@ -15,8 +15,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 
+interface Appointment {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  hospitalName: string;
+  hospitalID: string;
+  app_date: string;
+  address: string;
+  description: string;
+}
+
 export default function AppointmentManager() {
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -27,11 +39,21 @@ export default function AppointmentManager() {
     address: "",
     description: "",
   });
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState<string | null>(null); // Explicitly typed as string | null
 
   const fetchAppointments = async () => {
     const snapshot = await getDocs(collection(db, "appointments"));
-    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const data = snapshot.docs.map((doc) => ({ 
+      id: doc.id, 
+      fullName: doc.data().fullName,
+      email: doc.data().email,
+      phoneNumber: doc.data().phoneNumber,
+      hospitalName: doc.data().hospitalName,
+      hospitalID: doc.data().hospitalID,
+      app_date: doc.data().app_date,
+      address: doc.data().address,
+      description: doc.data().description,
+    }));
     setAppointments(data);
   };
 
@@ -60,7 +82,7 @@ export default function AppointmentManager() {
     fetchAppointments();
   };
 
-  const handleEdit = (appointment) => {
+  const handleEdit = (appointment: Appointment) => {
     setForm({
       fullName: appointment.fullName,
       email: appointment.email,
@@ -74,7 +96,7 @@ export default function AppointmentManager() {
     setEditId(appointment.id);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => { // Explicitly typed parameter
     await deleteDoc(doc(db, "appointments", id));
     fetchAppointments();
   };
