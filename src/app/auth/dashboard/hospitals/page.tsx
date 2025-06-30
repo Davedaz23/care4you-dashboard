@@ -102,8 +102,8 @@ const HospitalsPage = () => {
                   aria-label={`Edit ${hospital.name}`}
                 >
                   Edit
-                </Link> */}
-                <h1>Edit</h1>
+                </Link> 
+               
                 <button
                   onClick={() => openDeleteModal(hospital)}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm transition"

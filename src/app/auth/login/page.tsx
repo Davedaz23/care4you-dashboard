@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { loginWithPhone } from "../../../config/auth";
-import { useAdminAuth } from "@/context/authContext"; // Import the auth context
-// Update the path below if your PasswordInput is located elsewhere
+import { useAdminAuth } from "@/context/authContext";
 import { PasswordInput } from '../../../components/PasswordInput';
 
 interface LoginForm {
@@ -20,7 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { setUser } = useAdminAuth(); // Get setUser from context
+  const { setUser } = useAdminAuth();
 
   const { phone, password } = form;
 
@@ -29,6 +28,13 @@ export default function LoginPage() {
     setForm(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(prev => ({
+      ...prev,
+      password: e.target.value
     }));
   };
 
@@ -44,9 +50,22 @@ export default function LoginPage() {
     }
 
     try {
-      const user = await loginWithPhone(phone, password);
-      localStorage.setItem("adminUser", JSON.stringify(user));
-      router.push("/auth/dashboard");
+      const normalizedPhone = phone.replace(/\D/g, '');
+      const user = await loginWithPhone(normalizedPhone, password,"hospital");
+      
+      const userData = {
+        uid: user.uid,
+        phone: user.phone,
+        role: user.role,
+        name: 'Admin',
+        ...(user.hospitalId && { hospitalId: user.hospitalId }),
+        ...(user.hospitalName && { hospitalName: user.hospitalName })
+      };
+
+      localStorage.setItem("adminUser", JSON.stringify(userData));
+      setUser(userData);
+      
+      router.push("/auth/dashboard/appointments");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred. Please try again.");
     } finally {
@@ -63,30 +82,33 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Phone Number</label>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-600">
+              Phone Number
+            </label>
             <input
-              type="text"
+              id="phone"
               name="phone"
-              placeholder="Enter phone number"
+              type="tel"
+              placeholder="Enter phone number (e.g., 09111213..)"
               value={phone}
               onChange={handleChange}
               required
-              pattern="[0-9]{10}"  // Basic validation for 10 digits
+              pattern="[0-9]{10}"
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
             <p className="text-xs text-gray-500 mt-1">Enter 10-digit phone number without symbols</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter password"
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600">
+              Password
+            </label>
+            <PasswordInput
+              //id="password"
               value={password}
-              onChange={handleChange}
+              onChange={handlePasswordChange}
+              placeholder="Enter password"
               required
-              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
           </div>
 
@@ -102,18 +124,6 @@ export default function LoginPage() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-
-        {/* <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <span
-              onClick={() => router.push("/auth/signup")}
-              className="text-sky-600 font-medium cursor-pointer hover:underline"
-            >
-              Create an account
-            </span>
-          </p>
-        </div> */}
       </div>
     </div>
   );

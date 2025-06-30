@@ -60,48 +60,57 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   }
 
   return (
-    <html lang="en">
-      <body className="bg-sky-50 font-sans">
-        <div className="flex h-screen overflow-hidden">
-          {/* Sidebar - Mobile Toggle */}
-          <div
-  className={`fixed z-40 md:relative top-0 left-0 h-full bg-[#00b4d8] w-64 shadow-lg border-r border-gray-200 p-6 flex flex-col justify-between transform ${
-    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-  } md:translate-x-0 transition-transform duration-300 ease-in-out`}
->
-  <div>
-    <div className="flex justify-between items-center mb-10 md:hidden">
-      <h2 className="text-xl font-bold text-white">🏥 Care4You</h2>
-      <button onClick={() => setSidebarOpen(false)}>
-        <X size={24} className="text-white" />
-      </button>
-    </div>
-    <h2 className="hidden md:block text-2xl font-bold text-white mb-10">🏥 Care4You</h2>
-    <nav className="space-y-2">
-      <SidebarLink href="/dashboard" icon={<Home size={20} />} label="Dashboard" white />
-      <SidebarLink href="/auth/dashboard/Users" icon={<Users size={20} />} label="User List" white />
-      <SidebarLink href="/auth/dashboard/appointments" icon={<Calendar size={20} />} label="Appointments" white />
-      <SidebarLink href="/auth/dashboard/patients" icon={<Users size={20} />} label="Patients" white />
-      <SidebarLink href="/auth/dashsboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
-      <SidebarLink href="/auth/dashboard/reports" icon={<FileText size={20} />} label="Reports" white />
-      <SidebarLink href="/auth/dashboard/settings" icon={<Settings size={20} />} label="Settings" white />
-    </nav>
-  </div>
-
-  <div>
-    <button
-      className="flex items-center gap-2 text-red-100 hover:text-red-200 font-medium"
-      onClick={() => {
-        localStorage.removeItem('adminUser');
-        router.push('/');
-      }}
-    >
-      <LogOut size={18} />
-      Logout
-    </button>
-  </div>
-</div>
-
+    <div className="bg-sky-50 font-sans">
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar - Mobile Toggle */}
+        <div
+          className={`fixed z-40 md:relative top-0 left-0 h-full bg-[#00b4d8] w-64 shadow-lg border-r border-gray-200 p-6 flex flex-col justify-between transform ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 transition-transform duration-300 ease-in-out`}
+        >
+          <div>
+            <div className="flex justify-between items-center mb-10 md:hidden">
+              <h2 className="text-xl font-bold text-white">
+                <Image src="/watermarkimage.png" width={10} height={10} alt="Care4You Logo" />
+                Care4You
+              </h2>
+              <button onClick={() => setSidebarOpen(false)}>
+                <X size={24} className="text-white" />
+              </button>
+            </div>
+            <h2 className="hidden md:block text-2xl font-bold text-white mb-10">
+              <Image src="/watermarkimage.png" width={50} height={50} alt="Care4You Logo" />
+              Care4You
+            </h2>
+            <nav className="space-y-2">
+              <SidebarLink href="/auth/dashboard/appointments" icon={<Home size={20} />} label="Appointments" white />
+              <SidebarLink href="/auth/dashboard/Users" icon={<Users size={20} />} label="User List" white />
+              <SidebarLink href="/auth/dashboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
+              {user?.role === 'superadmin' && (
+                <SidebarLink 
+                  href="/auth/signup" 
+                  icon={<UserPlus size={20} />} 
+                  label="Register Admin" 
+                  white 
+                />
+              )}
+              <SidebarLink href="/auth/dashboard/signupHospital" icon={<FileText size={20} />} label="Register Hospital Admin" white />
+              <SidebarLink href="/auth/dashboard/settings" icon={<Settings size={20} />} label="Settings" white />
+              <div>
+                <button
+                  className="flex items-center gap-2 text-red-100 hover:text-red-200 font-medium"
+                  onClick={() => {
+                    localStorage.removeItem('adminUser');
+                    router.push('/');
+                  }}
+                >
+                  <LogOut size={18} />
+                  Logout
+                </button>
+              </div>
+            </nav>
+          </div>
+        </div>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">

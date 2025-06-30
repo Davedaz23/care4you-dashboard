@@ -7,6 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface Hospital {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface Appointment {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  hospitalName: string;
+  hospitalID: string;
+  app_date: string;
+  app_time: string;
+  address: string;
+  description: string;
+  formattedDate: string;
+}
 
 interface Appointment {
   id: string;
@@ -22,6 +43,7 @@ interface Appointment {
 
 export default function AppointmentManager() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -33,22 +55,49 @@ export default function AppointmentManager() {
     address: "",
     description: "",
   });
-  const [editId, setEditId] = useState<string | null>(null); // Explicitly typed as string | null
+  const [editId, setEditId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchAppointments = async () => {
-    const snapshot = await getDocs(collection(db, "appointments"));
-    const data = snapshot.docs.map((doc) => ({ 
-      id: doc.id, 
-      fullName: doc.data().fullName,
-      email: doc.data().email,
-      phoneNumber: doc.data().phoneNumber,
-      hospitalName: doc.data().hospitalName,
-      hospitalID: doc.data().hospitalID,
-      app_date: doc.data().app_date,
-      address: doc.data().address,
-      description: doc.data().description,
-    }));
-    setAppointments(data);
+    setLoading(true);
+    try {
+      const snapshot = await getDocs(collection(db, "appointments"));
+      const data = snapshot.docs.map((doc) => {
+        const docData = doc.data();
+        return {
+          id: doc.id,
+          fullName: docData.fullName || "",
+          email: docData.email || "",
+          phoneNumber: docData.phoneNumber || "",
+          hospitalName: docData.hospitalName || "",
+          hospitalID: docData.hospitalID || "",
+          app_date: docData.app_date || "",
+          app_time: docData.app_time || "",
+          address: docData.address || "",
+          description: docData.description || "",
+          formattedDate: docData.app_date ? format(new Date(docData.app_date), "PPP") : "No date"
+        };
+      });
+      setAppointments(data);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchHospitals = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "hospitals"));
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "",
+        address: doc.data().address || ""
+      }));
+      setHospitals(data);
+    } catch (error) {
+      console.error("Error fetching hospitals:", error);
+    }
   };
 
   const handleSubmit = async () => {
@@ -98,7 +147,6 @@ export default function AppointmentManager() {
   };
 
   const handleEdit = (appointment: Appointment) => {
-  const handleEdit = (appointment: Appointment) => {
     setForm({
       fullName: appointment.fullName,
       email: appointment.email,
@@ -113,9 +161,26 @@ export default function AppointmentManager() {
     setEditId(appointment.id);
   };
 
-  const handleDelete = async (id: string) => { // Explicitly typed parameter
-    await deleteDoc(doc(db, "appointments", id));
-    fetchAppointments();
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this appointment?")) {
+      try {
+        await deleteDoc(doc(db, "appointments", id));
+        fetchAppointments();
+      } catch (error) {
+        console.error("Error deleting appointment:", error);
+      }
+    }
+  };
+
+  const handleHospitalSelect = (hospitalId: string) => {
+    const selectedHospital = hospitals.find(h => h.id === hospitalId);
+    if (selectedHospital) {
+      setForm({
+        ...form,
+        hospitalName: selectedHospital.name,
+        hospitalID: selectedHospital.id
+      });
+    }
   };
 
   useEffect(() => {
