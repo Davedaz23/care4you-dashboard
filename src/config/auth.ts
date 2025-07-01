@@ -1,15 +1,92 @@
-import { getDocs, query, where,  collection, doc,addDoc,getDoc, setDoc } from "firebase/firestore";
+import { 
+  getDocs, 
+  query, 
+  where, 
+  getDoc, 
+  collection, 
+  doc, 
+  setDoc,
+  addDoc,
+  updateDoc,
+  onSnapshot
+} from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import db from "./firestoreConfig";
 import { v4 as uuid } from "uuid";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 
-export const subscribeToAuthChanges = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+
+export const changePassword = async (
+  uid: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  try {
+    // 1. Verify current password
+    const userDoc = await getDoc(doc(db, "adminuser", uid));
+    if (!userDoc.exists()) {
+      throw new Error("User not found");
+    }
+
+    const userData = userDoc.data();
+    const isPasswordValid = await bcrypt.compare(currentPassword, userData.password);
+    if (!isPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    // 2. Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 3. Update password in Firestore
+    await updateDoc(doc(db, "adminuser", uid), {
+      password: hashedPassword,
+      updatedAt: new Date().toISOString()
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
 };
-// Login with phone number
-export const loginWithPhone = async (phone: string, password: string, p0: string) => {
+
+// Add this function to your exports
+export const subscribeToAuthChanges = (callback: (user: any | null) => void) => {
+  // Get the user ID from localStorage (where you presumably store it after login)
+  const storedUser = localStorage.getItem('adminUser');
+  let userId: string | null = null;
+  
+  try {
+    userId = storedUser ? JSON.parse(storedUser).uid : null;
+  } catch (e) {
+    console.error("Error parsing stored user", e);
+  }
+
+  if (!userId) {
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
+
+  // Subscribe to the user document in Firestore
+  const userDocRef = doc(db, "adminuser", userId);
+  const unsubscribe = onSnapshot(userDocRef, (doc) => {
+    if (doc.exists()) {
+      const userData = doc.data();
+      callback({
+        uid: doc.id,
+        ...userData
+      });
+    } else {
+      callback(null);
+    }
+  });
+
+  return unsubscribe;
+};
+
+// Enhanced login with phone number that handles hospital role specifically
+export const loginWithPhone = async (phone: string, password: string, requiredRole?: string) => {
   const userRef = collection(db, "adminuser");
   const q = query(userRef, where("phone", "==", phone));
   const querySnapshot = await getDocs(q);

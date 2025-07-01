@@ -101,24 +101,27 @@ const SettingsPage = () => {
 };
 
 // Update your password strength indicator:
-{formData.newPassword && (
-  <div className="mt-1 text-xs text-gray-500">
-    Password strength: <span className={`font-medium ${
-      getPasswordStrength(formData.newPassword) === 'Weak' ? 'text-red-500' :
-      getPasswordStrength(formData.newPassword) === 'Medium' ? 'text-yellow-500' :
-      'text-green-500'
-    }`}>
-      {getPasswordStrength(formData.newPassword)}
-    </span>
-    {validatePassword(formData.newPassword).messages.length > 0 && (
-      <ul className="mt-1 list-disc list-inside">
-        {validatePassword(formData.newPassword).messages.map((msg, i) => (
-          <li key={i} className="text-red-500">{msg}</li>
-        ))}
-      </ul>
-    )}
-  </div>
-)}
+// {formData.newPassword && (
+//   <div className="mt-1 text-xs text-gray-500">
+//     Password strength: <span className={`font-medium ${
+//       getPasswordStrength(formData.newPassword) == 'Weak' ? 'text-red-500' :
+//       getPasswordStrength(formData.newPassword) == 'Medium' ? 'text-yellow-500' :
+//       'text-green-500'
+//     }`}>
+//       {getPasswordStrength(formData.newPassword)}
+//     </span>
+//     {(() => {
+//       const validation = validatePassword(formData.newPassword);
+//       return validation.messages.length > 0 ? (
+//         <ul className="mt-1 list-disc list-inside">
+//           {validation.messages.map((msg, i) => (
+//             <li key={i} className="text-red-500">{msg}</li>
+//           ))}
+//         </ul>
+//       ) : null;
+//     })()}
+//   </div>
+// )}
 
   const isPasswordFormValid = () => {
     return (
@@ -332,7 +335,7 @@ const SettingsPage = () => {
                       </button>
                     </div>
                     {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
-                      <p className="mt-1 text-xs text-red-500">Passwords don't match</p>
+                      <p className="mt-1 text-xs text-red-500">Passwords dont match</p>
                     )}
                   </div>
                   

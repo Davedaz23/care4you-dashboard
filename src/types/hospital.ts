@@ -2,6 +2,8 @@
 export interface Hospital {
   id: string;
   name: string;
-  description: string;
-  // Add other properties as needed
+  address: string;
+  description: string; // Make this required
+  photo?: string;
+  // Add other fields as needed
 }

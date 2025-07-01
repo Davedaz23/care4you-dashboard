@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribeToAuthChanges } from '@/config/auth';
 import { Route } from 'next';
-import { Route } from 'next';
+
 
 interface AuthGuardProps {
   children: ReactNode;

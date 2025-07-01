@@ -13,7 +13,9 @@ interface HospitalFormProps {
 const HospitalForm = ({ initialData, onSubmit, onCancel }: HospitalFormProps) => {
   const [formData, setFormData] = useState<Omit<Hospital, 'id'>>({
     name: initialData?.name || '',
+    address: initialData?.address || '', // Added address field
     description: initialData?.description || '',
+    photo: initialData?.photo || '', // Added photo field
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ const HospitalForm = ({ initialData, onSubmit, onCancel }: HospitalFormProps) =>
       await onSubmit(formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save hospital');
-      throw err; // Re-throw to let parent component handle if needed
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -56,6 +58,21 @@ const HospitalForm = ({ initialData, onSubmit, onCancel }: HospitalFormProps) =>
             id="name"
             name="name"
             value={formData.name}
+            onChange={handleChange}
+            required
+            className="w-full mt-2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#00b4d8] transition"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="address" className="block text-sm font-semibold text-gray-700">
+            Address *
+          </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={formData.address}
             onChange={handleChange}
             required
             className="w-full mt-2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#00b4d8] transition"
