@@ -1,27 +1,58 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: import('next').NextConfig = {
   reactStrictMode: true,
-  // Enable static export
-  output: 'export', // This enables static HTML export
   
-  // Optional: Add basePath if your site is not deployed at root
-  // basePath: '/your-base-path',
+  // Only use output: 'export' if you're doing static HTML export
+  // output: 'export', // Consider removing this for full functionality
   
-  // Optional: Add assetPrefix if assets are served from a CDN
-  // assetPrefix: '/your-asset-prefix',
+  images: {
+    // For static export (if you must keep it)
+    unoptimized: true,
+    
+    // Add Firebase Storage domain
+    domains: [
+      'firebasestorage.googleapis.com',
+      'lh3.googleusercontent.com' // For Firebase Auth profile images if used
+    ],
+    
+    // If you need to support other image domains
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.firebasestorage.googleapis.com',
+      },
+    ],
+    
+    // Minimum Cache Time to Live (in seconds)
+    minimumCacheTTL: 60,
+  },
   
-  // TypeScript server configuration
+  // Enable CORS headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
+          },
+        ],
+      },
+    ];
+  },
+  
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
   },
   
-  // Disable image optimization as it's not supported with static export
-  images: {
-    unoptimized: true,
-  },
-  
-  // Plesk-specific settings
-  distDir: 'out', // Standard directory for static exports
+  // Plesk settings
+  distDir: process.env.NODE_ENV === 'production' ? 'out' : '.next',
   compress: true,
 }
 

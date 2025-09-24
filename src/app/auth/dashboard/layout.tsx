@@ -6,7 +6,6 @@ import { useAdminAuth } from '@/context/authContext';
 import {
   Home,
   Users,
-  Calendar,
   FileText,
   Settings,
   LogOut,
@@ -70,10 +69,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         >
           <div>
             <div className="flex justify-between items-center mb-10 md:hidden">
-              <h2 className="text-xl font-bold text-white">
+              {/* <h2 className="text-xl font-bold text-white">
                 <Image src="/watermarkimage.png" width={10} height={10} alt="Care4You Logo" />
                 Care4You
-              </h2>
+              </h2> */}
               <button onClick={() => setSidebarOpen(false)}>
                 <X size={24} className="text-white" />
               </button>
@@ -84,7 +83,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             </h2>
             <nav className="space-y-2">
               <SidebarLink href="/auth/dashboard/appointments" icon={<Home size={20} />} label="Appointments" white />
-              <SidebarLink href="/auth/dashboard/Users" icon={<Users size={20} />} label="User List" white />
+              {user?.role === 'superadmin' && (
+              <SidebarLink 
+              href="/auth/dashboard/Users" 
+              icon={<Users size={20} />} 
+              label="User List" white />
+              )}
               <SidebarLink href="/auth/dashboard/hospitals" icon={<Users size={20} />} label="Hospitals" white />
               {user?.role === 'superadmin' && (
                 <SidebarLink 
@@ -94,7 +98,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                   white 
                 />
               )}
-              <SidebarLink href="/auth/dashboard/signupHospital" icon={<FileText size={20} />} label="Register Hospital Admin" white />
+
+              {user?.role === 'superadmin' && (
+              <SidebarLink 
+              href="/auth/dashboard/signupHospital"
+               icon={<FileText size={20} />} 
+               label="Register Hospital Admin" white />
+               )}
               <SidebarLink href="/auth/dashboard/settings" icon={<Settings size={20} />} label="Settings" white />
               <div>
                 <button

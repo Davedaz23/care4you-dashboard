@@ -13,9 +13,6 @@ import {
 import bcrypt from "bcryptjs";
 import db from "./firestoreConfig";
 import { v4 as uuid } from "uuid";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "./firebaseConfig";
-
 
 export const changePassword = async (
   uid: string,
@@ -158,19 +155,36 @@ export const createAdminUser = async (
 
 // Register a new hospital (combines user and hospital creation)
 export const registerHospital = async (
-  phone: string,
-  password: string,
-  hospitalName: string,
-  address: string,
-  description?: string
+  phone: string, 
+  password: string, 
+  hospitalName: string, 
+  address: string, 
+  location?: string, 
+  description?: string, 
+  images?: string[], 
+  services?: string, 
+  email?: string, 
+  website?: string, 
+  hours?: string, 
+  bankAccountId?: string,
+  appointmentFee?: number // Added appointment fee parameter
 ) => {
   // First create the hospital record
   const hospitalData = {
     name: hospitalName,
     address,
+    location: location || address,
     description: description || "",
+    photoBase64: images && images.length > 0 ? images[0] : null, // Store the first image URL
+    services: services ? services.split(',') : [],
+    email: email || null,
+    website: website || null,
+    hours: hours || "24/7",
+    bankAccountId: bankAccountId || null,
+    appointmentFee: appointmentFee || 0, // Added appointment fee field with default value
     createdAt: new Date().toISOString(),
-    status: "active"
+    status: "active",
+    phone // Store the admin phone as hospital contact
   };
 
   const hospitalRef = await addDoc(collection(db, "hospitals"), hospitalData);
@@ -186,13 +200,13 @@ export const registerHospital = async (
   );
 
   // Update hospital with admin user ID
-  await setDoc(doc(db, "hospitals", hospitalId), {
+  await updateDoc(doc(db, "hospitals", hospitalId), {
     adminId: userId
-  }, { merge: true });
+  });
 
   return {
     userId,
-    hospitalId
+    hospitalId: hospitalRef.id
   };
 };
 
@@ -244,4 +258,4 @@ export const addHospital = async (hospitalData: any) => {
 // Specific hospital login function
 export const loginHospitalAdmin = async (phone: string, password: string) => {
   return loginWithPhone(phone, password, "hospital");
-};
+}
